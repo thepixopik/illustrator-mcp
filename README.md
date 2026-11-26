@@ -1,88 +1,40 @@
-# Pixopik Illustrator MCP (`v0.3.0`) — Pro Vector MCP Server & CEP Plugin
+# Pixopik Illustrator MCP (`v0.4.0`) — No-Code Setup Guide
 
-Automate **Adobe Illustrator** from **Gemini Enterprise**, **Claude Desktop**, **Cursor**, or **VS Code** using a full **16-Tool Pro Vector Toolkit**:
-1. **Cloud / Remote `StreamableHTTP` + Illustrator CEP Plugin (`cep-plugin/`)** — Draw live vector artwork directly from **Gemini Enterprise** web chat!
-2. **Local `stdio` Windows COM Bridge** — Zero-plugin local desktop setup for Claude Desktop & Cursor on Windows.
+Connect **Gemini Enterprise** directly to **Adobe Illustrator on Windows** in **3 simple clicks**—no terminal, no coding, and no server commands needed!
 
 ---
 
-## Architecture: Gemini Enterprise ➔ Adobe Illustrator
+## Super Simple 3-Step Setup (Windows)
 
-```text
-Gemini Enterprise Chat (Cloud)
-       │  HTTPS POST /mcp (StreamableHTTP)
-       ▼
-Illustrator MCP HTTP Server (src/http-server.ts)
-       │  WebSocket (/ws)
-       ▼
-Illustrator CEP Panel Plugin (cep-plugin/ inside Illustrator)
-       │  __adobe_cep__.evalScript + Node fs
-       ▼
-Adobe Illustrator Canvas (Bezier Pen, Pathfinder, Gradients, Masks, SVG, Previews)
-```
+### Step 1: Install the Illustrator Plugin
+1. On this GitHub page, click the green **`<> Code`** button ➔ **`Download ZIP`**.
+2. Extract (Unzip) the downloaded folder on your Windows PC.
+3. Double-click **`INSTALL_PLUGIN.bat`**.
 
----
+### Step 2: Open the Panel in Adobe Illustrator
+1. Restart **Adobe Illustrator**.
+2. Go to top menu: **`Window` ➔ `Extensions` ➔ `Pixopik MCP Bridge`**.
+3. It will **automatically connect** to your live Cloudflare server and show a **🟢 Green dot (`Connected & Ready!`)**!
 
-## Quick Setup for Gemini Enterprise (Windows)
+### Step 3: Add Your Live Link in Gemini Enterprise (One Time Only)
+1. In Gemini Enterprise, click **Settings & help** ➔ **Manage team** ➔ **Connected apps** ➔ **Add MCP Server**.
+2. Paste your live MCP Server URL:
+   ```text
+   https://illustrator-mcp.goutamboronew.workers.dev/mcp
+   ```
+3. Choose **No authentication** (or default), save, then open the **Actions** tab, click **Reload custom actions**, and **turn ON** the tools!
 
-### 1. Install the Adobe Illustrator Plugin (1 Command)
-
-```powershell
-git clone https://github.com/thepixopik/illustrator-mcp.git
-cd illustrator-mcp
-powershell -ExecutionPolicy Bypass -File .\cep-plugin\install-windows.ps1
-```
-
-Restart Adobe Illustrator and open **`Window > Extensions > Pixopik MCP Bridge`**.
-
-### 2. Start the `StreamableHTTP` + WebSocket Server
-
-```powershell
-npm install
-npm run build
-$env:MCP_AUTH_TOKEN="your-secret-token"
-npm run start:http
-```
-
-Expose port `3100` over HTTPS (via Cloud Run / Railway / Render, or locally via **Cloudflare Tunnel**):
-
-```powershell
-cloudflared tunnel --url http://localhost:3100
-```
-
-### 3. Connect Panel & Add to Gemini Enterprise
-
-1. In Illustrator's **Pixopik MCP Bridge** panel, connect to `ws://localhost:3100/ws` (or `wss://your-domain/ws`).
-2. In Gemini Enterprise: **Settings & help ➔ Manage team ➔ Connected apps ➔ Add MCP Server** ➔ enter `https://<your-domain>/mcp?token=your-secret-token`.
-3. Under **Actions**, click **Reload custom actions** and **Enable** all 16 Illustrator tools!
+Done! Now just type in Gemini Enterprise chat (e.g. *"Create a 1080x1080 artboard in Illustrator and draw a modern colorful geometric logo"*) and watch it draw live in Illustrator!
 
 ---
 
-## Pro Vector Toolkit (16 MCP Tools)
-
-| Tool | Illustrator Capability |
-|---|---|
-| `get_document_info` | Inspect active document dimensions, artboards, layers, item names, and selection |
-| `create_document` | Create new `RGB` or `CMYK` documents with custom pixel dimensions |
-| `create_shape` | Draw `rectangle`, `rounded_rectangle`, `ellipse`, `polygon`, or `star` primitives |
-| `draw_bezier_path` | **Pen Tool:** Draw custom straight or smooth curved Bezier paths with control handles |
-| `add_text` | **Type Tool:** Point Text & wrapping Area Text with font family, size, tracking, alignment |
-| `place_svg` | Import full `<svg>` markup as **100% live, editable native Illustrator vector paths** |
-| `apply_gradient` | **Gradient Tool:** Multi-stop Linear & Radial gradients with angle and stop opacity |
-| `apply_pathfinder` | **Pathfinder:** `unite`, `subtract`, `intersect`, `exclude`, `divide`, `trim`, `merge`, `crop` |
-| `create_clipping_mask` | **Clipping Mask:** Mask target artwork inside any vector shape |
-| `manage_layers` | **Layers Panel:** Create, activate, rename, delete, lock/unlock, and show/hide layers |
-| `transform_and_style` | Move, rotate, scale, duplicate, delete, blend modes, opacity, and **Outline Stroke** |
-| `align_items` | **Align Panel:** Align left/center/right & top/middle/bottom to Artboard or Selection |
-| `execute_menu_command` | Trigger any of Illustrator's 500+ internal `executeMenuCommand` strings or `.aia` Actions |
-| `export_document` | Save/export production files in **`.ai`, `.pdf`, `.svg`, `.eps`, `.png`, or `.jpg`** |
-| `export_preview` | Return live PNG24 canvas preview to multimodal AI for visual self-correction |
-| `run_extendscript` | Escape-hatch runner for arbitrary ES3 ExtendScript inside Illustrator |
+## Live Endpoints
+* **MCP Server URL (for Gemini Enterprise):** `https://illustrator-mcp.goutamboronew.workers.dev/mcp`
+* **Health Check URL (open in browser to check status):** `https://illustrator-mcp.goutamboronew.workers.dev/health`
+* **Plugin WebSocket URL (pre-filled automatically):** `wss://illustrator-mcp.goutamboronew.workers.dev/ws`
 
 ---
 
 ## License & Disclaimer
-
 Released under the [MIT License](./LICENSE).
-
 > **Disclaimer:** Not affiliated with, sponsored, or endorsed by Adobe. Adobe and Adobe Illustrator are either registered trademarks or trademarks of Adobe in the United States and/or other countries.

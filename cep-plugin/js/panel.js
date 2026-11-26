@@ -1,27 +1,33 @@
 (function () {
+  var DEFAULT_CLOUDFLARE_WS = "wss://illustrator-mcp.goutamboronew.workers.dev/ws";
+
   var nodeReq = window.cep_node && window.cep_node.require ? window.cep_node.require : window.require;
   var fs = nodeReq ? nodeReq("fs") : null;
   var os = nodeReq ? nodeReq("os") : null;
   var path = nodeReq ? nodeReq("path") : null;
 
   var ws = null;
-  var shouldReconnect = false;
+  var shouldReconnect = true;
   var reconnectTimer = null;
+  var pingTimer = null;
 
   var statusDot = document.getElementById("statusDot");
   var statusText = document.getElementById("statusText");
   var wsUrlInput = document.getElementById("wsUrl");
-  var authTokenInput = document.getElementById("authToken");
   var connectBtn = document.getElementById("connectBtn");
   var clearLogBtn = document.getElementById("clearLogBtn");
   var logBox = document.getElementById("logBox");
 
   try {
     var savedUrl = localStorage.getItem("pixopik_mcp_ws_url");
-    var savedToken = localStorage.getItem("pixopik_mcp_token");
-    if (savedUrl) wsUrlInput.value = savedUrl;
-    if (savedToken) authTokenInput.value = savedToken;
-  } catch (_e) {}
+    if (savedUrl && savedUrl.indexOf("localhost") === -1) {
+      wsUrlInput.value = savedUrl;
+    } else {
+      wsUrlInput.value = DEFAULT_CLOUDFLARE_WS;
+    }
+  } catch (_e) {
+    wsUrlInput.value = DEFAULT_CLOUDFLARE_WS;
+  }
 
   function addLog(msg) {
     var time = new Date().toLocaleTimeString();
@@ -65,12 +71,13 @@
       fs.writeFileSync(tempFile, String(msg.script || ""), "utf8");
       var forwardPath = tempFile.replace(/\\/g, "/");
       var callExpr = '__pixopikRunFile("' + forwardPath.replace(/"/g, '\\"') + '")';
-      addLog("Running MCP ExtendScript command...");
+      addLog("Drawing in Illustrator...");
       evalHostScript(callExpr, function (resultStr) {
         try {
           fs.unlinkSync(tempFile);
         } catch (_err) {}
         ws.send(JSON.stringify({ id: msg.id, ok: true, output: resultStr }));
+        addLog("Done!");
       });
     } catch (err) {
       ws.send(JSON.stringify({ id: msg.id, ok: false, error: String(err) }));
@@ -92,7 +99,7 @@
     var callExpr =
       '__pixopikExportPng("' + forwardPng.replace(/"/g, '\\"') + '", ' + scale + ', "' + transp + '")';
 
-    addLog("Exporting artboard PNG preview...");
+    addLog("Sending artboard preview...");
     evalHostScript(callExpr, function (resStr) {
       try {
         var parsed = JSON.parse(resStr || "{}");
@@ -112,55 +119,57 @@
     });
   }
 
+  function stopHeartbeat() {
+    if (pingTimer) {
+      clearInterval(pingTimer);
+      pingTimer = null;
+    }
+  }
+
   function connectSocket() {
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
     }
-    var rawUrl = wsUrlInput.value.trim();
-    var token = authTokenInput.value.trim();
-    if (!rawUrl) {
-      addLog("Please enter a valid WebSocket URL.");
-      return;
-    }
+    stopHeartbeat();
 
+    var finalUrl = wsUrlInput.value.trim() || DEFAULT_CLOUDFLARE_WS;
     try {
-      localStorage.setItem("pixopik_mcp_ws_url", rawUrl);
-      localStorage.setItem("pixopik_mcp_token", token);
+      localStorage.setItem("pixopik_mcp_ws_url", finalUrl);
     } catch (_e) {}
 
-    var finalUrl = rawUrl;
-    if (token) {
-      finalUrl += (rawUrl.indexOf("?") === -1 ? "?" : "&") + "token=" + encodeURIComponent(token);
-    }
-
     setStatus(false, "Connecting...");
-    addLog("Connecting to " + rawUrl);
 
     try {
       ws = new WebSocket(finalUrl);
     } catch (err) {
       setStatus(false, "Connection Error");
-      addLog("WebSocket error: " + String(err));
+      addLog("Error: " + String(err));
       return;
     }
 
     ws.onopen = function () {
-      setStatus(true, "Connected to MCP Relay");
-      addLog("Connected! Ready for Gemini Enterprise commands.");
+      setStatus(true, "Connected & Ready!");
+      addLog("Connected to Cloudflare! Ready for Gemini commands.");
       ws.send(
         JSON.stringify({
           type: "hello",
           plugin: "com.thepixopik.illustrator.mcp",
-          version: "0.2.0",
+          version: "0.4.0",
           platform: navigator.platform
         })
       );
+      pingTimer = setInterval(function () {
+        if (ws && ws.readyState === 1) {
+          ws.send(JSON.stringify({ type: "ping" }));
+        }
+      }, 25000);
     };
 
     ws.onmessage = function (event) {
       try {
         var msg = JSON.parse(event.data);
+        if (msg.type === "pong") return;
         if (msg.type === "eval_jsx") {
           handleEvalJsx(msg);
         } else if (msg.type === "export_preview") {
@@ -172,22 +181,21 @@
     };
 
     ws.onclose = function () {
+      stopHeartbeat();
       ws = null;
-      setStatus(false, shouldReconnect ? "Reconnecting in 3s..." : "Disconnected");
-      addLog("Socket closed.");
+      setStatus(false, shouldReconnect ? "Reconnecting..." : "Disconnected");
       if (shouldReconnect) {
         reconnectTimer = setTimeout(connectSocket, 3000);
       }
     };
 
-    ws.onerror = function () {
-      addLog("WebSocket connection failed.");
-    };
+    ws.onerror = function () {};
   }
 
   connectBtn.addEventListener("click", function () {
     if (ws || shouldReconnect) {
       shouldReconnect = false;
+      stopHeartbeat();
       if (reconnectTimer) clearTimeout(reconnectTimer);
       if (ws) ws.close();
       setStatus(false, "Disconnected");
@@ -201,5 +209,6 @@
     logBox.innerHTML = "";
   });
 
-  addLog("Panel loaded. Click Connect to link Illustrator.");
+  /* Auto-connect immediately when Illustrator opens the panel! */
+  connectSocket();
 })();

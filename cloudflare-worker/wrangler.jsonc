@@ -1,0 +1,21 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "illustrator-mcp",
+  "main": "worker.js",
+  "compatibility_date": "2025-04-01",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "RELAY_DO",
+        "class_name": "IllustratorRelayDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["IllustratorRelayDO"]
+    }
+  ]
+}

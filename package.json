@@ -1,7 +1,7 @@
 {
   "name": "illustrator-mcp",
-  "version": "0.3.0",
-  "description": "Pro Vector MCP Server & CEP Plugin for Adobe Illustrator (16 Tools: Bezier Pen, Pathfinder, Gradients, Masks, SVG, StreamableHTTP + WS)",
+  "version": "0.4.0",
+  "description": "Zero-CLI Adobe Illustrator CEP Plugin + Live Cloudflare Worker MCP Server for Gemini Enterprise",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
@@ -11,28 +11,12 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "dev:http": "tsx src/http-server.ts",
+    "deploy:cf": "wrangler deploy --config cloudflare-worker/wrangler.jsonc",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:http": "node dist/http-server.js",
-    "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts"
+    "start:http": "node dist/http-server.js"
   },
-  "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "gemini-enterprise",
-    "illustrator",
-    "cep-extension",
-    "extendscript",
-    "pathfinder",
-    "bezier",
-    "streamable-http",
-    "websocket",
-    "windows"
-  ],
   "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
     "express": "^4.21.2",
@@ -44,6 +28,7 @@
     "@types/node": "^22.13.0",
     "@types/ws": "^8.5.14",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "wrangler": "^4.10.0"
   }
 }
