@@ -121,11 +121,7 @@ export function buildCreateShapeJsx(params: {
       item = doc.activeLayer.pathItems.rectangle(top, left, ${params.width}, ${params.height});
     }
 
-    ${
-      params.name
-        ? `item.name = ${jsxStr(params.name)};`
-        : ""
-    }
+    ${params.name ? `item.name = ${jsxStr(params.name)};` : ""}
 
     ${
       params.fillHex
@@ -196,6 +192,50 @@ export function buildAddTextJsx(params: {
       y: ${params.y},
       fontSize: ${params.fontSize}
     };
+  `;
+}
+
+export function buildPlaceSvgJsx(params: {
+  svgCode: string;
+  x: number;
+  y: number;
+  name?: string;
+}): string {
+  return `
+    if (app.documents.length === 0) {
+      throw new Error("No active document open in Illustrator.");
+    }
+    var doc = app.activeDocument;
+    var abIdx = doc.artboards.getActiveArtboardIndex();
+    var abRect = doc.artboards[abIdx].artboardRect;
+
+    var tempSvg = new File(Folder.temp.fsName + "/pixopik_mcp_" + (new Date().getTime()) + ".svg");
+    tempSvg.encoding = "UTF-8";
+    if (!tempSvg.open("w")) {
+      throw new Error("Unable to create temporary SVG file in Illustrator.");
+    }
+    tempSvg.write(${jsxStr(params.svgCode)});
+    tempSvg.close();
+
+    try {
+      var grp = doc.groupItems.createFromFile(tempSvg);
+      grp.position = [abRect[0] + (${params.x}), abRect[1] - (${params.y})];
+      ${params.name ? `grp.name = ${jsxStr(params.name)};` : ""}
+      app.redraw();
+      return {
+        placed: true,
+        name: grp.name,
+        layer: doc.activeLayer.name,
+        width: grp.width,
+        height: grp.height,
+        x: ${params.x},
+        y: ${params.y}
+      };
+    } finally {
+      if (tempSvg.exists) {
+        tempSvg.remove();
+      }
+    }
   `;
 }
 

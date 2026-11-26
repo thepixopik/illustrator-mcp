@@ -1,62 +1,74 @@
-# Pixopik Illustrator MCP — MCP Server for Adobe Illustrator (Windows)
+# Pixopik Illustrator MCP — MCP Server & CEP Plugin for Adobe Illustrator
 
-A lightweight, zero-plugin **Model Context Protocol (MCP)** server for automating **Adobe Illustrator on Windows** using **COM Automation (`Illustrator.Application`)** and **ExtendScript (`.jsx`)**.
-
-No CEP extension or panel installation required—connect Claude Desktop, Cursor, VS Code, or any MCP-compatible AI client directly to your running Adobe Illustrator instance on Windows.
+Automate **Adobe Illustrator** from **Gemini Enterprise**, **Claude Desktop**, **Cursor**, or **VS Code** using either:
+1. **Cloud / Remote `StreamableHTTP` + Illustrator CEP Plugin (`cep-plugin/`)** — Draw live vector artwork directly from **Gemini Enterprise** web chat!
+2. **Local `stdio` Windows COM Bridge** — Zero-plugin local desktop setup for Claude Desktop & Cursor on Windows.
 
 ---
 
-## Architecture
+## Architecture: Gemini Enterprise ➔ Adobe Illustrator
 
 ```text
-MCP Client (Claude / Cursor / Inspector)
-       │  JSON-RPC over stdio
+Gemini Enterprise Chat (Cloud)
+       │  HTTPS POST /mcp (StreamableHTTP)
        ▼
-Node.js / TypeScript MCP Server (src/index.ts)
-       │  Temp UTF-8 .jsx + PowerShell -EncodedCommand
+Illustrator MCP HTTP Server (src/http-server.ts)
+       │  WebSocket (/ws)
        ▼
-Windows COM Bridge (Illustrator.Application.DoJavaScript)
-       │
+Illustrator CEP Panel Plugin (cep-plugin/ inside Illustrator)
+       │  __adobe_cep__.evalScript + Node fs
        ▼
-Adobe Illustrator (ES3 ExtendScript DOM + PNG24 Preview Export)
+Adobe Illustrator Canvas (Live Vectors, SVG Groups, Text & PNG Previews)
 ```
 
-* **Zero Quoting Bugs:** Scripts are written to temporary UTF-8 `.jsx` files and invoked via base64 UTF-16LE `-EncodedCommand`, completely avoiding PowerShell quoting and Windows command-line length limits.
-* **Built-in ES3 JSON Serializer:** Automatically injects an ES3-compatible `toJson()` helper so ExtendScript (which lacks native `JSON.stringify`) returns clean JSON back to your AI client.
-* **Thin ExtendScript Layer:** Keeps validation in TypeScript (`zod`) and host scripts isolated in `src/jsx/` for easy future migration to Adobe UXP.
-
 ---
 
-## Prerequisites
+## Option A: Connect Directly to Gemini Enterprise (CEP Plugin + HTTP Relay)
 
-* **OS:** Windows 10 / 11
-* **Node.js:** v18+
-* **Adobe Illustrator:** Installed and running under the same Windows user privilege level as your terminal/MCP client
-
----
-
-## Quick Start
+### 1. Install the Adobe Illustrator Plugin on Windows (1 Command)
 
 ```powershell
 git clone https://github.com/thepixopik/illustrator-mcp.git
 cd illustrator-mcp
-npm install
-npm run build
+powershell -ExecutionPolicy Bypass -File .\cep-plugin\install-windows.ps1
 ```
 
-### Test with MCP Inspector
+Restart Adobe Illustrator and open **`Window > Extensions > Pixopik MCP Bridge`**.
 
-Open Adobe Illustrator on Windows, then run:
+### 2. Start the `StreamableHTTP` + WebSocket Server
 
 ```powershell
-npm run inspect
+npm install
+npm run build
+
+# Optional security token (recommended when exposing over HTTPS):
+$env:MCP_AUTH_TOKEN="your-secret-token"
+npm run start:http
 ```
+
+Expose port `3100` over HTTPS (for example by deploying `src/http-server.ts` to Cloud Run / Railway / Render, or running **Cloudflare Tunnel** locally):
+
+```powershell
+cloudflared tunnel --url http://localhost:3100
+```
+
+### 3. Connect the Illustrator Panel
+
+Inside Illustrator's **Pixopik MCP Bridge** panel:
+* **WebSocket URL:** `ws://localhost:3100/ws` (if running tunnel locally) or `wss://your-deployed-url.com/ws` (if deployed in the cloud)
+* **Auth Token:** Same `MCP_AUTH_TOKEN` (if set)
+* Click **Connect** ➔ Status turns **🟢 Connected to MCP Relay**!
+
+### 4. Add to Gemini Enterprise
+
+1. In Gemini Enterprise, go to **Settings & help ➔ Manage team ➔ Connected apps ➔ Add MCP Server**.
+2. Enter your HTTPS endpoint: `https://<your-tunnel-or-cloud-domain>/mcp` (append `?token=your-secret-token` or configure OAuth/Bearer auth).
+3. Go to the **Actions** tab, click **Reload custom actions**, and **Enable** all Illustrator tools.
+4. Ask Gemini Enterprise right in chat: *"Create a 1080x1080 document in Illustrator and place a modern geometric rocket SVG logo!"*
 
 ---
 
-## Configure in MCP Clients (Windows)
-
-### Claude Desktop (`%APPDATA%\Claude\claude_desktop_config.json`)
+## Option B: Local Desktop `stdio` Mode (Claude Desktop / Cursor on Windows)
 
 ```json
 {
@@ -69,40 +81,19 @@ npm run inspect
 }
 ```
 
-### Cursor / VS Code (`.cursor/mcp.json` or `.vscode/mcp.json`)
-
-```json
-{
-  "mcpServers": {
-    "illustrator": {
-      "command": "node",
-      "args": ["C:\\path\\to\\illustrator-mcp\\dist\\index.js"]
-    }
-  }
-}
-```
-
 ---
 
-## Included MCP Tools
+## Included MCP Tools (7 Tools)
 
 | Tool | Description |
 |---|---|
 | `get_document_info` | Inspect active document dimensions, color mode, artboards, layers, and selection count |
 | `create_document` | Create a new Illustrator document (`RGB` or `CMYK`) with custom pixel dimensions |
-| `create_shape` | Draw editable vector `rectangle` or `ellipse` items using intuitive top-left coordinates |
+| `create_shape` | Draw editable vector `rectangle` or `ellipse` items using top-left coordinates |
 | `add_text` | Add live, editable point text frames with custom font size and hex color |
-| `export_preview` | Export the active artboard as a PNG24 image so multimodal AI models can inspect their own work |
-| `run_extendscript` | Escape-hatch tool to run arbitrary ES3 ExtendScript inside Illustrator and return structured data |
-
----
-
-## ExtendScript (ES3) Tips
-
-Adobe Illustrator's ExtendScript engine runs **ECMAScript 3**:
-* Use `var` instead of `const` or `let`.
-* Use traditional `function() {}` syntax instead of arrow functions (`=>`).
-* Inside `run_extendscript`, simply `return { ... };`—the bridge automatically serializes objects via `toJson()`.
+| `place_svg` | Import full `<svg>` vector artwork as **native editable Illustrator vector paths & groups** |
+| `export_preview` | Export the active artboard as a PNG24 image so Gemini can visually inspect its design |
+| `run_extendscript` | Run custom ES3 ExtendScript inside Illustrator and return structured JSON |
 
 ---
 

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pixopik MCP Bridge</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title-row">
+        <span class="dot" id="statusDot"></span>
+        <span class="title">Pixopik MCP Bridge</span>
+      </div>
+      <div class="status-text" id="statusText">Disconnected</div>
+    </div>
+
+    <div class="field">
+      <label for="wsUrl">MCP Relay WebSocket URL</label>
+      <input id="wsUrl" type="text" value="ws://localhost:3100/ws" placeholder="wss://your-server.com/ws" />
+    </div>
+
+    <div class="field">
+      <label for="authToken">Auth Token (Optional)</label>
+      <input id="authToken" type="password" value="" placeholder="MCP_AUTH_TOKEN" />
+    </div>
+
+    <div class="actions">
+      <button id="connectBtn" class="btn primary">Connect</button>
+      <button id="clearLogBtn" class="btn">Clear Log</button>
+    </div>
+
+    <div class="log-header">Live Activity</div>
+    <div id="logBox" class="log-box"></div>
+  </div>
+
+  <script src="./js/panel.js"></script>
+</body>
+</html>
