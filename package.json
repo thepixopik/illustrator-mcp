@@ -1,0 +1,38 @@
+{
+  "name": "illustrator-mcp",
+  "version": "0.1.0",
+  "description": "MCP Server for Adobe Illustrator on Windows via COM Automation and ExtendScript",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "illustrator-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "illustrator",
+    "extendscript",
+    "windows",
+    "com-automation",
+    "vector"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
