@@ -1,7 +1,7 @@
 {
   "name": "illustrator-mcp",
-  "version": "0.2.0",
-  "description": "MCP Server & CEP 12 Plugin for Adobe Illustrator (StreamableHTTP + WebSocket Relay + Windows COM)",
+  "version": "0.3.0",
+  "description": "Pro Vector MCP Server & CEP Plugin for Adobe Illustrator (16 Tools: Bezier Pen, Pathfinder, Gradients, Masks, SVG, StreamableHTTP + WS)",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
@@ -23,6 +23,8 @@
     "illustrator",
     "cep-extension",
     "extendscript",
+    "pathfinder",
+    "bezier",
     "streamable-http",
     "websocket",
     "windows"
