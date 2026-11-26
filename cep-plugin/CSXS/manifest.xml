@@ -2,11 +2,11 @@
 <ExtensionManifest
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   ExtensionBundleId="com.thepixopik.illustrator.mcp"
-  ExtensionBundleVersion="0.2.0"
+  ExtensionBundleVersion="0.4.0"
   ExtensionBundleName="Pixopik MCP Bridge"
   Version="11.0">
   <ExtensionList>
-    <Extension Id="com.thepixopik.illustrator.mcp.panel" Version="0.2.0" />
+    <Extension Id="com.thepixopik.illustrator.mcp.panel" Version="0.4.0" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -38,12 +38,12 @@
           <Menu>Pixopik MCP Bridge</Menu>
           <Geometry>
             <Size>
-              <Height>380</Height>
-              <Width>300</Width>
+              <Height>580</Height>
+              <Width>320</Width>
             </Size>
             <MinSize>
-              <Height>280</Height>
-              <Width>250</Width>
+              <Height>420</Height>
+              <Width>260</Width>
             </MinSize>
           </Geometry>
         </UI>

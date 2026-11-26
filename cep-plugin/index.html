@@ -9,8 +9,12 @@
   <div class="container">
     <div class="header">
       <div class="title-row">
-        <span class="dot" id="statusDot"></span>
-        <span class="title">Pixopik MCP Bridge</span>
+        <div class="title-left">
+          <span class="dot" id="statusDot"></span>
+          <span class="title">Pixopik MCP Bridge</span>
+          <span class="badge">v0.4</span>
+        </div>
+        <button id="reloadUiBtn" class="icon-btn" title="Reload Panel UI">&#8635;</button>
       </div>
       <div class="status-text" id="statusText">Connecting...</div>
     </div>
@@ -23,6 +27,39 @@
     <div class="actions">
       <button id="connectBtn" class="btn primary">Connect</button>
       <button id="clearLogBtn" class="btn">Clear Log</button>
+    </div>
+
+    <div class="ref-card">
+      <div class="ref-header">
+        <span>Reference Image Studio (95% Exact)</span>
+        <button id="clearRefBtn" class="clear-ref-btn" style="display:none;" title="Remove Reference">&#10005;</button>
+      </div>
+
+      <div id="refDropzone" class="dropzone" tabindex="0">
+        <div id="refEmptyState" class="drop-empty">
+          <div class="drop-title">+ Drop Reference Image / Click</div>
+          <div class="drop-sub">Or press Ctrl+V to paste screenshot</div>
+        </div>
+        <div id="refPreviewWrap" class="preview-wrap" style="display:none;">
+          <img id="refThumb" class="ref-thumb" alt="Reference" />
+          <div class="ref-info">
+            <div id="refDims" class="ref-dims"></div>
+            <div id="refSwatches" class="ref-swatches"></div>
+          </div>
+        </div>
+      </div>
+      <input id="refFileInput" type="file" accept="image/*" style="display:none;" />
+
+      <select id="tracePreset" class="preset-select">
+        <option value="color_pro">Mode: Multi-Color Icons / Logo (95% Exact)</option>
+        <option value="line_art">Mode: Crisp Monoline / Black &amp; White</option>
+        <option value="high_detail">Mode: High-Detail Full Color</option>
+      </select>
+
+      <div class="actions">
+        <button id="traceBtn" class="btn accent" disabled>Exact Vector Trace</button>
+        <button id="overlayBtn" class="btn secondary" disabled>Ghost Guide (35%)</button>
+      </div>
     </div>
 
     <div class="log-header">Live Activity</div>
